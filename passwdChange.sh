@@ -1,6 +1,3 @@
-#!/usr/bin/expect
-# http://stackoverflow.com/questions/27837674/changing-a-linux-password-via-script
-
 # Usage:
 # passwdChange <username> <oldpassword> <newpassword>
 
