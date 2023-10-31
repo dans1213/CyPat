@@ -1,0 +1,212 @@
+#!/bin/bash
+#backup /etc/passwd
+cp /etc/passwd /etc/passwd.backup
+#backup /etc/group
+cp /etc/group /etc/group.backup
+
+for i in $(cat /etc/passwd | cut -d: -f 1,3,6 | grep -e "[5-9][0-9][0-9]" -e "[0-9][0-9][0-9][0-9]" | grep "/home" | cut -d: -f1) ; do
+yes "CyberPatri@t21" | passwd $i ;
+#This changes in the shadow file the max and min password days
+passwd -x 85 $i;
+passwd -n 15 $i;
+#save the history into the log directory
+cp /home/$i/.bash_history /logs/$i
+echo $i >> usersChanged.txt
+done;
+echo "Finished with changing all passwords"
+#Delete bad users
+#For every user in /etc/passwd file who isn’t mentioned in the README, removes them and deletes everything they have
+for i in $(cat /etc/passwd | cut -d: -f 1,3,6 | grep -e "[5-9][0-9][0-9]" -e "[0-9][0-9][0-9][0-9]" | grep "/home" | cut -d: -f1) ; do
+if [[ $( grep -ic -e $i $(pwd)/README ) -eq 0 ]]; then
+(deluser $i --remove-all-files >> RemovingUsers.txt 2>&1) & #starts deleting in background
+fi
+done
+echo "Finished with deleting bad users"
+#For everyone in the addusers file, creates the user
+echo "" >> addusers.txt
+for i in $(cat $(pwd)/addusers.txt); do
+useradd $i;
+done
+echo "added users"
+#Goes and makes users admin/not admin as needed
+#for every user with UID above 500 that has a home directory
+for i in $(cat /etc/passwd | cut -d: -f 1,3,6 | grep -e "[5-9][0-9][0-9]" -e "[0-9][0-9][0-9][0-9]" | grep "/home" | cut -d: -f1); do
+#If the user is supposed to be a normal user but is in the sudo group, remove them from sudo
+BadUser=0
+if [[ $( grep -ic $i $(pwd)/users.txt ) -ne 0 ]]; then
+if [[ $( echo $( grep "sudo" /etc/group) | grep -ic $i ) -ne 0 ]]; then
+#if username is in sudo when shouldn’t
+deluser $i sudo;
+echo "removing $i from sudo" >> usersChanged.txt
+fi
+if [[ $( echo $( grep "adm" /etc/group) | grep -ic $i ) -ne 0 ]]; then
+#if username is in adm when shouldn’t
+deluser $i adm;
+echo "removing $i from admin" >> usersChanged.txt
+fi
+else
+BadUser=$((BadUser+1));
+fi
+#If user is supposed to be an adm but isn’t, raise privilege.
+if [[ $( grep -ic $i $(pwd)/admin.txt ) -ne 0 ]]; then
+if [[ $( echo $( grep "sudo" /etc/group) | grep -ic $i ) -eq 0 ]]; then
+#if username isn't in sudo group when should
+usermod -a -G "sudo" $i
+echo "add $i to sudo" >> usersChanged.txt
+fi
+if [[ $( echo $( grep "adm" /etc/group) | grep -ic $i ) -eq 0 ]]; then
+#if username isn't in adm when should
+usermod -a -G "adm" $i
+echo "add $i to adm" >> usersChanged.txt
+fi
+else
+BadUser=$((BadUser+1));
+fi
+if [[ $BadUser -eq 2 ]]; then
+echo "WARNING: USER $i HAS AN ID THAT IS CONSISTENT WITH A NEWLY ADDED USER YET IS NOT MENTIONED IN EITHER THE admin.txt OR users.txt FILE. LOOK INTO THIS." >> usersChanged.txt
+fi
+done
+echo "Finished changing users"
+
+#!/bin/bash
+#check for root
+echo "" > log.txt
+echo "log.txt created" >> log.txt
+CheckRoot()
+{
+   # If we are not running as root we exit the program
+   if [ 'id -u' != 0 ]
+   then
+      echo "ERROR: You must be root user to run this program"
+      echo "ERROR: You must be root user to run this program" >> log.txt
+      exit
+   fi
+}
+
+#update
+ apt-get update &&  apt-get upgrade
+if $?=0
+then
+  echo "apt-get update/upgrade complete" >> log.txt
+else
+  echo "apt-get update/upgrade failed" >> log.txt
+fi
+#set auto upgrades
+cat updates.txt > /etc/apt/apt.conf.d/20auto-upgrades
+
+#get installed programs to programs.txt
+dpkg -l > programs.txt
+
+# In the future I would like to automatically read all installed apt and snap packages and write them to either an array
+# or a file that this section can read
+
+awk 'NR==FNR {a[$1]++; next} $1 in a' badthings.txt programs.txt >> toremove.txt #saves all bad programs to file
+echo "wrote bad programs to toremove.txt" >> log.txt
+# need an input for all critcal programs, and then to set booleans accordingly to use throughout the script
+# gonna use a text file with all critcal programs manually typed in from the README.
+
+#UFW
+ apt install ufw -y
+ echo "installed ufw" >> log.txt
+ ufw reset
+ echo "reset ufw" >> log.txt
+# start of ufw
+if grep -q ssh "critical.txt"; then
+   ufw limit 22/tcp
+  echo 'allowed port 22/tcp for ssh' >> log.txt
+fi
+if grep -q webserver "critical.txt"; then
+     ufw allow 80/tcp &&  ufw allow 443/tcp
+    echo 'allowed port 80/tcp & 443/tcp' >> log.txt
+fi
+if grep -q ftp "critical.txt"; then
+ ufw allow 22/tcp
+echo 'allowed port 22' >> log.txt
+fi
+ ufw default deny incoming
+ ufw default allow outgoing
+echo 'set ufw default rules' >> log.txt
+ ufw status >> log.txt
+ ufw enable >> log.txt
+echo ufw enabled >> log.txt
+
+
+
+#Services 
+#CHANGE THESE TO FOLLOW THE SAME RULES AS UFW/USE INSTALLED PROGRAM LIST
+service apache2 stop
+systemctl disable apache2
+service ssh stop
+systemctl disable ssh
+service nginx stop
+systemctl disable nginx
+service vsftpd stop
+systemctl disable vsftpd
+service rsh stop
+systemctl disable rsh
+service cups stop
+systemctl disable cups
+service xinetd stop
+systemctl disable xinetd
+service isc-dhcp-server stop
+systemctl disable isc-dhcp-server
+service  nfs-server stop
+systemctl disable  nfs-server
+service rpcbind stop
+systemctl disable rpcbind
+service bind9 stop
+systemctl disable bind9
+service avahi-daemon stop
+systemctl disable avahi-daemon
+service smbd stop
+systemctl disable smbd
+service rsync stop
+systemctl disable rsync
+service nis stop
+systemctl disable nis
+service squid stop
+systemctl disable squid
+for i in {1..5} 
+do
+echo "$i"+'REMEMBER TO RESTART CRITICAL SERVICES!'
+done
+
+# just a reminder that # is to comment and that capital letters screw up cmds
+#this remove one-liner is still dumb rn, woring on modular uninstall section
+# apt-get remove --purge netcat-openbsd netcat-traditional openbsd-inetd kismet wireshark nmap zenmap ophcrack john apache2 nginx nginx-common nginx-full bind9 rpcbind rsh-server rsh-client rsh-redone-client pure-ftpd samba os-prober freeciv telnet telnetd telnet-server talk tcpd tcpdump telepathy remmina ppp smbclient libsmbclient mysql-server postgresql crack crack-common logkeys hydra fakeroot nikto bind cupsd vuze vsftpd ftp aisleriot nis ldap-utils transmission transmissions-gtk qbittorrent nzbget sabnzbd sabnzbdplus docker
+#echo 'removed bad programs' >> log.txt
+#Security
+ apt install clamtk
+echo 'installed clamtk' >> log.txt
+#Logs
+ apt install auditd
+auditctl -e 1
+echo 'set up logs' >> log.txt
+#MOTD/Banners
+
+#DISABLED THIS, IDK WHAT IT REALLY DOES AND I DONT KNOW HOW TO FIX IT
+#chown root:root /etc/motd
+#chmod 644 /etc/motd
+#chown root:root /etc/issue
+#chmod 644 /etc/issue
+#chown root:root /etc/issue.net
+#chmod 644 /etc/issue.net
+#echo user-db:user 
+#system-db:gdm 
+#file-db:/usr/share/gdm/greeter-dconf-defaults "" > echo /etc/dconf/profile/gdm
+#dconf update
+#echo 'motd/banners done' >> log.txt
+#LYNIS TIME
+#rushing to get a release out before next comp so gonna cut automatic auditing, will write lynis output to lynis.txt
+ apt-get install lynis
+echo 'lynis installed' >> log.txt
+lynis audit system > lynix.txt
+echo 'lynis written' >> log.txt
+
+#!/bin/bash
+for i in badthings.txt ; do
+if [[ $( grep -ic -e $i $(pwd)/README ) -eq 0 ]]; then
+(apt-get remove --purge $i >> RemovingPrograms.txt 2>&1) & #starts deleting in background
+fi
+done
+
