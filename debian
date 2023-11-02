@@ -1,0 +1,82 @@
+#Start firewall
+sudo ufw enable
+
+#Check firewall rules for unauthorized inbound rules
+sudo ufw status numbered
+sudo ufw delete number
+
+#Check for unauthorized admins
+cat /etc/group | grep sudo
+
+#delete unauthorized users
+sudo userdel -r user # Only use -r if they don't say anything against deleting the user and their files.
+
+# Check for other undeleted home directories
+cd /home
+ls
+
+#If you can't delete files or users
+sudo usermod -L username
+
+#updates
+# Make sure to listen to what's happening. Something important might require your verification.
+sudo apt-get update
+sudo apt-get dist-upgrade -y
+sudo apt-get install -f -y
+sudo apt-get autoremove -y
+sudo apt-get autoclean -y
+sudo apt-get check
+
+#Enable automatic updates (credit) In the GUI set Update Manager->Settings->Updates->Check for updates:->Daily.
+#Optional: If the README wants administrators to use sudo
+
+#Get packages
+sudo apt-get -V -y install firefox chkrootkit ufw gufw clamav
+
+#Delete telnet
+sudo apt-get purge telnet
+
+#admins use sudo
+sudo usermod -l root
+
+#lock root
+# Make sure openssh-server is installed before doing this.
+sudo nano /etc/ssh/sshd_config
+# Look for PermitRootLogin, replace "PermitRootLogin" with "PermitRootLogin no" without quotes
+sudo service ssh restart
+
+#Optional: If the README says it doesn't want openssh-server or ftp
+sudo apt-get -y purge openssh-server* 
+sudo apt-get -y purge vsftpd*
+
+#malwares
+sudo apt-get -y purge hydra*
+sudo apt-get -y purge john* # John the Ripper, brute forcing software
+sudo apt-get -y purge nikto* # Website pentesting
+# sudo apt-get -y purge netcat* Scans open ports, might not get points
+
+#prohibited files
+# You MUST paste this into a bash or sh file to run.
+for suffix in mp3 txt wav wma aac mp4 mov avi gif jpg png bmp img exe msi bat sh
+do
+  sudo find /home -name *.$suffix
+done
+
+#OPTIONAL  If your README wants it, harden VSFTPD
+# Disable anonymous uploads
+sudo sed -i '/^anon_upload_enable/ c\anon_upload_enable no' /etc/vsftpd.conf
+sudo sed -i '/^anonymous_enable/ c\anonymous_enable=NO' /etc/vsftpd.conf
+# FTP user directories use chroot
+sudo sed -i '/^chroot_local_user/ c\chroot_local_user=YES' /etc/vsftpd.conf
+sudo service vsftpd restart
+
+#Password dates
+PASS_MIN_DAYS 7
+PASS_MAX_DAYS 90
+PASS_WARN_AGE 14
+
+
+cronjob
+/etc/cron
+suspicious name within crontab of user for it to be implemented 
+
