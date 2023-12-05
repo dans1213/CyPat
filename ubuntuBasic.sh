@@ -71,7 +71,6 @@ sudo apt autoremove wireshark -y
 
 # clamAV
 sudo apt install clamav
-sudo freshclam
 clamscan -r --bell -i
 
 # set up max and min passwd days
@@ -101,3 +100,9 @@ sudo chgrp root /etc/passwd
 sudo chmod 640 /etc/shadow
 sudo chown root /etc/shadow
 
+# Sudoers File Configuration
+sudo chmod root /etc/sudoers
+sudo chown root /etc/sudoers
+sudo chgrp root /etc/sudoers
+sudo chmod root /etc/sudoers
+sudo chown root /etc/sudoers
