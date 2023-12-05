@@ -1,3 +1,4 @@
+#!/bin/bash
 # ufw enable
 sudo apt purge ufw
 sudo apt install ufw
