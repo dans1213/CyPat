@@ -70,7 +70,7 @@ sudo apt-get --purge ettercap -y
 sudo apt-get --purge wireshark -y
 
 # clamAV
-sudo apt intall clamav
+sudo apt install clamav
 sudo freshclam
 clamscan -r --bell -i
 
