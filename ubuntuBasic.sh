@@ -68,12 +68,35 @@ sudo apt-get --purge netcat-openbsd -y
 sudo apt-get --purge ettercap -y
 sudo apt-get --purge wireshark -y
 
-# update and upgrade
-sudo apt update
-sudo apt upgrade
-
-
 # clamAV
 sudo apt intall clamav
 sudo freshclam
 clamscan -r --bell -i
+
+# set up max and min passwd days
+sudo sed -i '160c\PASS_MAX_DAYS	90' /etc/login.defs
+sudo sed -i '161c\PASS_MIN_DAYS	30' /etc/login.defs
+sudo sed -i '161c\PASS_WARN_AGE	30' /etc/login.defs
+
+# update and upgrade
+sudo apt update
+sudo apt upgrade
+
+# auditing config
+sudo apt install auditd -y
+sudo auditctl -e 1 -w /usr/bin/sudo -p x -k sudo_exec
+sudo systemctl enable auditd
+sudo systemctl start auditd
+
+# AppArmor config
+sudo apt install apparmor apparmor-profiles
+sudo systemctl enable apparmor
+sudo systemctl start apparmor
+
+# Password File Configuration
+sudo chmod 0644 /etc/passwd
+sudo chown root /etc/passwd
+sudo chgrp root /etc/passwd
+Sudo chmod 640 /etc/shadow
+Sudo chown root /etc/shadow
+
